@@ -65,7 +65,7 @@ export default function Tasks() {
   };
 
   const handleGeneratePlan = () => {
-    generatePlan.mutate({}, {
+    generatePlan.mutate(undefined, {
       onSuccess: (data) => {
         setStudyPlan(data.plan);
       }
@@ -83,18 +83,18 @@ export default function Tasks() {
   }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-display font-bold tracking-tight mb-2">Tasks & Exams</h1>
-          <p className="text-muted-foreground text-lg">Keep track of every deadline.</p>
+          <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-1 md:mb-2">Tasks & Exams</h1>
+          <p className="text-muted-foreground text-base md:text-lg">Keep track of every deadline.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" onClick={handleGeneratePlan} disabled={generatePlan.isPending} className="gap-2">
-            <Sparkles className="w-4 h-4" /> {generatePlan.isPending ? 'Generating...' : 'AI Study Plan'}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <Button variant="secondary" onClick={handleGeneratePlan} disabled={generatePlan.isPending} className="gap-2 w-full sm:w-auto h-12 md:h-10 text-base md:text-sm">
+            <Sparkles className="w-5 h-5 md:w-4 md:h-4" /> {generatePlan.isPending ? 'Generating...' : 'AI Study Plan'}
           </Button>
-          <Button onClick={() => setIsCreating(true)} className="gap-2 rounded-full px-6">
-            <Plus className="w-4 h-4" /> New Task
+          <Button onClick={() => setIsCreating(true)} className="gap-2 rounded-full px-6 w-full sm:w-auto h-12 md:h-10 text-base md:text-sm">
+            <Plus className="w-5 h-5 md:w-4 md:h-4" /> New Task
           </Button>
         </div>
       </header>
@@ -102,9 +102,9 @@ export default function Tasks() {
       {studyPlan && (
         <Card className="border-secondary bg-secondary/5 relative overflow-hidden">
           <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-secondary-foreground" onClick={() => setStudyPlan(null)}>
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5 md:w-4 md:h-4" />
           </Button>
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <h3 className="font-display font-bold text-xl flex items-center gap-2 mb-4 text-secondary-foreground">
               <BrainCircuit className="w-6 h-6" /> Your AI Strategy
             </h3>
@@ -115,47 +115,47 @@ export default function Tasks() {
 
       {isCreating && (
         <Card className="border-primary/50 shadow-md">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <h3 className="font-display font-bold text-xl mb-4">Add Task or Exam</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-semibold text-muted-foreground">Title *</label>
-                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Read Chapters 4-5" />
+                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Read Chapters 4-5" className="h-11 md:h-10" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label className="text-sm font-semibold text-muted-foreground">Type</label>
-                <Select value={type} onChange={e => setType(e.target.value as any)}>
+                <Select value={type} onChange={e => setType(e.target.value as any)} className="h-11 md:h-10">
                   <option value="assignment">Assignment</option>
                   <option value="exam">Exam</option>
                 </Select>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label className="text-sm font-semibold text-muted-foreground">Due Date *</label>
-                <Input type="datetime-local" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                <Input type="datetime-local" value={dueDate} onChange={e => setDueDate(e.target.value)} className="h-11 md:h-10" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label className="text-sm font-semibold text-muted-foreground">Course</label>
-                <Select value={courseId} onChange={e => setCourseId(e.target.value)}>
+                <Select value={courseId} onChange={e => setCourseId(e.target.value)} className="h-11 md:h-10">
                   <option value="">No Course (General)</option>
                   {courses?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label className="text-sm font-semibold text-muted-foreground">Priority</label>
-                <Select value={priority} onChange={e => setPriority(e.target.value as any)}>
+                <Select value={priority} onChange={e => setPriority(e.target.value as any)} className="h-11 md:h-10">
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </Select>
               </div>
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-semibold text-muted-foreground">Description (Optional)</label>
-                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Add details, links, or notes..." />
+                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Add details, links, or notes..." className="min-h-[100px]" />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <Button variant="ghost" onClick={resetForm}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={!title || !dueDate || createTask.isPending}>
+            <div className="flex flex-col-reverse md:flex-row justify-end gap-3 mt-6">
+              <Button variant="ghost" onClick={resetForm} className="h-11 md:h-10">Cancel</Button>
+              <Button onClick={handleCreate} disabled={!title || !dueDate || createTask.isPending} className="h-11 md:h-10">
                 Create Task
               </Button>
             </div>
@@ -163,22 +163,22 @@ export default function Tasks() {
         </Card>
       )}
 
-      <div className="flex gap-2 border-b border-border pb-4">
+      <div className="flex gap-2 border-b border-border pb-4 overflow-x-auto no-scrollbar">
         {(['all', 'pending', 'completed'] as const).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-bold capitalize transition-colors ${filter === f ? 'bg-foreground text-background' : 'bg-transparent text-muted-foreground hover:bg-muted'}`}
+            className={`px-5 py-2.5 md:px-4 md:py-2 rounded-full text-sm md:text-sm font-bold capitalize transition-colors whitespace-nowrap ${filter === f ? 'bg-foreground text-background shadow-sm' : 'bg-transparent text-muted-foreground hover:bg-muted'}`}
           >
             {f}
           </button>
         ))}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 md:space-y-4">
         {isLoading ? (
-          <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />)}
+          <div className="space-y-3 md:space-y-4">
+            {[1,2,3].map(i => <div key={i} className="h-24 md:h-20 bg-muted rounded-2xl animate-pulse" />)}
           </div>
         ) : filteredTasks?.length === 0 ? (
           <div className="py-16 text-center">
@@ -192,16 +192,16 @@ export default function Tasks() {
             const courseColor = getCourseColor(task.courseId);
             
             return (
-              <div key={task.id} className={`group flex items-start gap-4 p-5 rounded-2xl border transition-all ${isDone ? 'bg-muted/30 border-transparent opacity-60' : 'bg-card border-card-border hover:border-primary/30 hover:shadow-sm'}`}>
+              <div key={task.id} className={`group flex items-start gap-3 md:gap-4 p-4 md:p-5 rounded-2xl border transition-all ${isDone ? 'bg-muted/30 border-transparent opacity-60' : 'bg-card border-card-border hover:border-primary/30 hover:shadow-sm'}`}>
                 <button 
                   onClick={() => toggleStatus(task)}
-                  className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isDone ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground hover:border-primary'}`}
+                  className={`mt-1 flex-shrink-0 w-7 h-7 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isDone ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground hover:border-primary'}`}
                 >
-                  {isDone && <CheckSquare className="w-3 h-3" />}
+                  {isDone && <CheckSquare className="w-3.5 h-3.5 md:w-3 md:h-3" />}
                 </button>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5 md:mb-1">
                     {task.courseId && (
                       <Badge variant="outline" className="text-[10px] border-none" style={{ backgroundColor: `${courseColor}20`, color: courseColor }}>
                         {getCourseCode(task.courseId)}
@@ -212,19 +212,19 @@ export default function Tasks() {
                     </Badge>
                     {task.type === 'exam' && <Badge variant="default" className="text-[10px] bg-indigo-500">EXAM</Badge>}
                   </div>
-                  <h4 className={`font-bold text-lg leading-tight mb-1 ${isDone ? 'line-through' : ''}`}>{task.title}</h4>
-                  {task.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{task.description}</p>}
+                  <h4 className={`font-bold text-lg leading-tight mb-1.5 md:mb-1 ${isDone ? 'line-through' : ''}`}>{task.title}</h4>
+                  {task.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2.5 md:mb-2">{task.description}</p>}
                   <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span className={!isDone && new Date(task.dueDate) < new Date() ? "text-destructive" : ""}>
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span className={`truncate ${!isDone && new Date(task.dueDate) < new Date() ? "text-destructive" : ""}`}>
                       {format(parseISO(task.dueDate), 'MMM d, yyyy • h:mm a')}
                     </span>
                   </div>
                 </div>
 
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(task.id)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="w-4 h-4" />
+                <div className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity self-start mt-1 shrink-0">
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(task.id)} className="text-muted-foreground hover:text-destructive h-10 w-10 md:h-8 md:w-8">
+                    <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
                   </Button>
                 </div>
               </div>
