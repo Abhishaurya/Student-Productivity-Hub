@@ -1,0 +1,2 @@
+- [Orval zod date coercion vs drizzle date columns](orval-zod-date-columns.md) — orval generates `zod.coerce.date()` for OpenAPI date/date-time fields, producing JS `Date`; drizzle `date` (day-only) columns in string mode need an explicit `.toISOString().slice(0,10)` conversion before insert/update.
+- [User-provided OpenAI key path](user-openai-key-path.md) — when Replit AI Integrations OpenAI setup is declined/unavailable, use the `openai` npm SDK directly with a user-supplied `OPENAI_API_KEY` secret instead of the integrations proxy package.

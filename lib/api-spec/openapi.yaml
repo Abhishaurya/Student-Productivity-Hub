@@ -3,13 +3,24 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Student OS API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: courses
+  - name: timetable
+  - name: tasks
+  - name: attendance
+  - name: notes
+  - name: grades
+  - name: goal
+  - name: reminders
+  - name: pomodoro
+  - name: dashboard
+  - name: ai
 paths:
   /healthz:
     get:
@@ -24,6 +35,705 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ---------- Courses ----------
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      responses:
+        "200":
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+  /courses/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateCourse
+      tags: [courses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ---------- Timetable ----------
+  /timetable-slots:
+    get:
+      operationId: listTimetableSlots
+      tags: [timetable]
+      responses:
+        "200":
+          description: List of timetable slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimetableSlot"
+    post:
+      operationId: createTimetableSlot
+      tags: [timetable]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TimetableSlotInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimetableSlot"
+  /timetable-slots/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateTimetableSlot
+      tags: [timetable]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TimetableSlotUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimetableSlot"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTimetableSlot
+      tags: [timetable]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /timetable-slots/today:
+    get:
+      operationId: getTodayTimetableSlots
+      tags: [timetable]
+      summary: Timetable slots scheduled for today
+      responses:
+        "200":
+          description: Today's slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimetableSlot"
+
+  # ---------- Tasks (assignments & exams) ----------
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [assignment, exam]
+        - name: courseId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /tasks/upcoming:
+    get:
+      operationId: getUpcomingTasks
+      tags: [tasks]
+      summary: Upcoming non-completed tasks sorted by due date
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Upcoming tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  # ---------- Attendance ----------
+  /attendance-records:
+    get:
+      operationId: listAttendanceRecords
+      tags: [attendance]
+      parameters:
+        - name: courseId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceRecord"
+    post:
+      operationId: createAttendanceRecord
+      tags: [attendance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceRecordInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+  /attendance-records/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateAttendanceRecord
+      tags: [attendance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceRecordUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteAttendanceRecord
+      tags: [attendance]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /attendance-summary:
+    get:
+      operationId: getAttendanceSummary
+      tags: [attendance]
+      summary: Attendance percentage breakdown per course
+      responses:
+        "200":
+          description: Attendance summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceSummaryEntry"
+
+  # ---------- Notes ----------
+  /notes:
+    get:
+      operationId: listNotes
+      tags: [notes]
+      parameters:
+        - name: courseId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      operationId: createNote
+      tags: [notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+  /notes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getNote
+      tags: [notes]
+      responses:
+        "200":
+          description: A note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateNote
+      tags: [notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteNote
+      tags: [notes]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ---------- Grades / CGPA ----------
+  /grade-entries:
+    get:
+      operationId: listGradeEntries
+      tags: [grades]
+      responses:
+        "200":
+          description: List of grade entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GradeEntry"
+    post:
+      operationId: createGradeEntry
+      tags: [grades]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeEntryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeEntry"
+  /grade-entries/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateGradeEntry
+      tags: [grades]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeEntryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeEntry"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteGradeEntry
+      tags: [grades]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /cgpa-summary:
+    get:
+      operationId: getCgpaSummary
+      tags: [grades]
+      summary: Computed CGPA and per-semester GPA breakdown
+      responses:
+        "200":
+          description: CGPA summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CgpaSummary"
+
+  # ---------- Goal ----------
+  /goal:
+    get:
+      operationId: getGoal
+      tags: [goal]
+      summary: Get the student's CGPA goal (created with defaults if missing)
+      responses:
+        "200":
+          description: Goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+    put:
+      operationId: updateGoal
+      tags: [goal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalInput"
+      responses:
+        "200":
+          description: Updated goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  # ---------- Reminders ----------
+  /reminders:
+    get:
+      operationId: listReminders
+      tags: [reminders]
+      parameters:
+        - name: upcomingOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reminder"
+    post:
+      operationId: createReminder
+      tags: [reminders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+  /reminders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    patch:
+      operationId: updateReminder
+      tags: [reminders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReminder
+      tags: [reminders]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /reminders/upcoming:
+    get:
+      operationId: getUpcomingReminders
+      tags: [reminders]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Upcoming reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reminder"
+
+  # ---------- Pomodoro ----------
+  /pomodoro-sessions:
+    get:
+      operationId: listPomodoroSessions
+      tags: [pomodoro]
+      responses:
+        "200":
+          description: List of pomodoro sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PomodoroSession"
+    post:
+      operationId: createPomodoroSession
+      tags: [pomodoro]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PomodoroSessionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PomodoroSession"
+  /pomodoro-sessions/stats:
+    get:
+      operationId: getPomodoroStats
+      tags: [pomodoro]
+      summary: Aggregate pomodoro stats (today + last 7 days)
+      responses:
+        "200":
+          description: Pomodoro stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PomodoroStats"
+
+  # ---------- Dashboard ----------
+  /dashboard-summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Aggregate home dashboard data
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  # ---------- AI ----------
+  /ai/study-plan:
+    post:
+      operationId: generateStudyPlan
+      tags: [ai]
+      summary: Generate an AI study plan from current pending tasks
+      responses:
+        "200":
+          description: Generated study plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlanResponse"
+  /notes/{id}/summarize:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: summarizeNote
+      tags: [ai]
+      summary: Generate an AI summary for a note and save it
+      responses:
+        "200":
+          description: Note with generated summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +744,324 @@ components:
       required:
         - status
 
+    Course:
+      type: object
+      required: [id, name, credits, color, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        code: { type: ["string", "null"] }
+        instructor: { type: ["string", "null"] }
+        color: { type: string }
+        credits: { type: number }
+        createdAt: { type: string, format: date-time }
+    CourseInput:
+      type: object
+      required: [name, credits]
+      properties:
+        name: { type: string, minLength: 1 }
+        code: { type: string }
+        instructor: { type: string }
+        color: { type: string }
+        credits: { type: number }
+    CourseUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        code: { type: string }
+        instructor: { type: string }
+        color: { type: string }
+        credits: { type: number }
+
+    TimetableSlot:
+      type: object
+      required: [id, courseId, dayOfWeek, startTime, endTime]
+      properties:
+        id: { type: integer }
+        courseId: { type: integer }
+        dayOfWeek:
+          type: integer
+          description: 0 = Sunday ... 6 = Saturday
+        startTime: { type: string, description: "HH:mm" }
+        endTime: { type: string, description: "HH:mm" }
+        location: { type: ["string", "null"] }
+    TimetableSlotInput:
+      type: object
+      required: [courseId, dayOfWeek, startTime, endTime]
+      properties:
+        courseId: { type: integer }
+        dayOfWeek: { type: integer }
+        startTime: { type: string }
+        endTime: { type: string }
+        location: { type: string }
+    TimetableSlotUpdate:
+      type: object
+      properties:
+        courseId: { type: integer }
+        dayOfWeek: { type: integer }
+        startTime: { type: string }
+        endTime: { type: string }
+        location: { type: string }
+
+    Task:
+      type: object
+      required: [id, title, type, dueDate, status, priority, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        courseId: { type: ["integer", "null"] }
+        type: { type: string, enum: [assignment, exam] }
+        dueDate: { type: string, format: date-time }
+        status: { type: string, enum: [pending, in_progress, completed] }
+        priority: { type: string, enum: [low, medium, high] }
+        grade: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    TaskInput:
+      type: object
+      required: [title, type, dueDate]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        courseId: { type: integer }
+        type: { type: string, enum: [assignment, exam] }
+        dueDate: { type: string, format: date-time }
+        status: { type: string, enum: [pending, in_progress, completed] }
+        priority: { type: string, enum: [low, medium, high] }
+        grade: { type: string }
+    TaskUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        courseId: { type: integer }
+        type: { type: string, enum: [assignment, exam] }
+        dueDate: { type: string, format: date-time }
+        status: { type: string, enum: [pending, in_progress, completed] }
+        priority: { type: string, enum: [low, medium, high] }
+        grade: { type: string }
+
+    AttendanceRecord:
+      type: object
+      required: [id, courseId, date, status]
+      properties:
+        id: { type: integer }
+        courseId: { type: integer }
+        date: { type: string, format: date }
+        status: { type: string, enum: [present, absent, excused] }
+    AttendanceRecordInput:
+      type: object
+      required: [courseId, date, status]
+      properties:
+        courseId: { type: integer }
+        date: { type: string, format: date }
+        status: { type: string, enum: [present, absent, excused] }
+    AttendanceRecordUpdate:
+      type: object
+      properties:
+        courseId: { type: integer }
+        date: { type: string, format: date }
+        status: { type: string, enum: [present, absent, excused] }
+    AttendanceSummaryEntry:
+      type: object
+      required: [courseId, courseName, totalClasses, present, absent, excused, percentage]
+      properties:
+        courseId: { type: integer }
+        courseName: { type: string }
+        totalClasses: { type: integer }
+        present: { type: integer }
+        absent: { type: integer }
+        excused: { type: integer }
+        percentage: { type: number }
+
+    Note:
+      type: object
+      required: [id, title, content, tags, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        content: { type: string }
+        courseId: { type: ["integer", "null"] }
+        summary: { type: ["string", "null"] }
+        tags:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    NoteInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1 }
+        content: { type: string }
+        courseId: { type: integer }
+        tags:
+          type: array
+          items: { type: string }
+    NoteUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        content: { type: string }
+        courseId: { type: integer }
+        summary: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+
+    GradeEntry:
+      type: object
+      required: [id, semesterName, courseName, credits, gradePoint]
+      properties:
+        id: { type: integer }
+        semesterName: { type: string }
+        courseName: { type: string }
+        credits: { type: number }
+        gradePoint: { type: number }
+    GradeEntryInput:
+      type: object
+      required: [semesterName, courseName, credits, gradePoint]
+      properties:
+        semesterName: { type: string, minLength: 1 }
+        courseName: { type: string, minLength: 1 }
+        credits: { type: number }
+        gradePoint: { type: number }
+    GradeEntryUpdate:
+      type: object
+      properties:
+        semesterName: { type: string, minLength: 1 }
+        courseName: { type: string, minLength: 1 }
+        credits: { type: number }
+        gradePoint: { type: number }
+    CgpaSemesterBreakdown:
+      type: object
+      required: [semesterName, gpa, credits]
+      properties:
+        semesterName: { type: string }
+        gpa: { type: number }
+        credits: { type: number }
+    CgpaSummary:
+      type: object
+      required: [cgpa, totalCredits, semesters]
+      properties:
+        cgpa: { type: number }
+        totalCredits: { type: number }
+        semesters:
+          type: array
+          items:
+            $ref: "#/components/schemas/CgpaSemesterBreakdown"
+
+    Goal:
+      type: object
+      required: [id, targetCgpa]
+      properties:
+        id: { type: integer }
+        targetCgpa: { type: number }
+        targetDate: { type: ["string", "null"], format: date }
+        note: { type: ["string", "null"] }
+    GoalInput:
+      type: object
+      required: [targetCgpa]
+      properties:
+        targetCgpa: { type: number }
+        targetDate: { type: string, format: date }
+        note: { type: string }
+
+    Reminder:
+      type: object
+      required: [id, title, remindAt, isDone, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        remindAt: { type: string, format: date-time }
+        isDone: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    ReminderInput:
+      type: object
+      required: [title, remindAt]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        remindAt: { type: string, format: date-time }
+        isDone: { type: boolean }
+    ReminderUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        remindAt: { type: string, format: date-time }
+        isDone: { type: boolean }
+
+    PomodoroSession:
+      type: object
+      required: [id, durationMinutes, completedAt]
+      properties:
+        id: { type: integer }
+        taskId: { type: ["integer", "null"] }
+        courseId: { type: ["integer", "null"] }
+        durationMinutes: { type: integer }
+        completedAt: { type: string, format: date-time }
+    PomodoroSessionInput:
+      type: object
+      required: [durationMinutes]
+      properties:
+        taskId: { type: integer }
+        courseId: { type: integer }
+        durationMinutes: { type: integer }
+    PomodoroDayStat:
+      type: object
+      required: [date, count, minutes]
+      properties:
+        date: { type: string, format: date }
+        count: { type: integer }
+        minutes: { type: integer }
+    PomodoroStats:
+      type: object
+      required: [totalSessions, totalMinutes, todaySessions, todayMinutes, last7Days]
+      properties:
+        totalSessions: { type: integer }
+        totalMinutes: { type: integer }
+        todaySessions: { type: integer }
+        todayMinutes: { type: integer }
+        last7Days:
+          type: array
+          items:
+            $ref: "#/components/schemas/PomodoroDayStat"
+
+    AttendanceRiskCourse:
+      type: object
+      required: [courseId, courseName, percentage]
+      properties:
+        courseId: { type: integer }
+        courseName: { type: string }
+        percentage: { type: number }
+
+    DashboardSummary:
+      type: object
+      required: [todayTimetable, upcomingTasks, cgpa, attendanceAtRisk, upcomingReminders]
+      properties:
+        todayTimetable:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimetableSlot"
+        upcomingTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        cgpa: { type: number }
+        attendanceAtRisk:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttendanceRiskCourse"
+        upcomingReminders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reminder"
+
+    StudyPlanResponse:
+      type: object
+      required: [plan, generatedAt]
+      properties:
+        plan: { type: string, description: "Markdown-formatted AI study plan" }
+        generatedAt: { type: string, format: date-time }
