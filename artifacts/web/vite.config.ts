@@ -5,27 +5,26 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
+const DEFAULT_PORT = 5173;
+const DEFAULT_BASE_PATH = '/';
+
 const rawPort = process.env.PORT;
 
-if (!rawPort) {
-  throw new Error(
-    'PORT environment variable is required but was not provided.',
-  );
+let port = DEFAULT_PORT;
+
+if (rawPort) {
+  const parsedPort = Number(rawPort);
+
+  if (Number.isNaN(parsedPort) || parsedPort <= 0) {
+    throw new Error(`Invalid PORT value: "${rawPort}"`);
+  }
+
+  port = parsedPort;
 }
 
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    'BASE_PATH environment variable is required but was not provided.',
-  );
-}
+// Falls back to '/' (a normal Vite app root) when BASE_PATH isn't set, e.g.
+// on Vercel. Replit sets BASE_PATH for its path-based artifact routing.
+const basePath = process.env.BASE_PATH || DEFAULT_BASE_PATH;
 
 export default defineConfig({
   base: basePath,
