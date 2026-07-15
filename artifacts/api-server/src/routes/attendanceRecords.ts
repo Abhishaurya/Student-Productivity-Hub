@@ -12,16 +12,24 @@ import {
   CreateAttendanceRecordResponse,
   UpdateAttendanceRecordResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 function toDateString(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-router.get("/attendance-summary", async (_req, res): Promise<void> => {
-  const courses = await db.select().from(coursesTable);
-  const records = await db.select().from(attendanceRecordsTable);
+router.get("/attendance-summary", async (req, res): Promise<void> => {
+  const courses = await db
+    .select()
+    .from(coursesTable)
+    .where(eq(coursesTable.userId, req.userId!));
+  const records = await db
+    .select()
+    .from(attendanceRecordsTable)
+    .where(eq(attendanceRecordsTable.userId, req.userId!));
 
   const summary = courses.map((course) => {
     const courseRecords = records.filter((r) => r.courseId === course.id);
@@ -53,14 +61,14 @@ router.get("/attendance-records", async (req, res): Promise<void> => {
     return;
   }
 
+  const conditions = [eq(attendanceRecordsTable.userId, req.userId!)];
+  if (query.data.courseId !== undefined)
+    conditions.push(eq(attendanceRecordsTable.courseId, query.data.courseId));
+
   const records = await db
     .select()
     .from(attendanceRecordsTable)
-    .where(
-      query.data.courseId !== undefined
-        ? eq(attendanceRecordsTable.courseId, query.data.courseId)
-        : undefined,
-    );
+    .where(and(...conditions));
 
   res.json(ListAttendanceRecordsResponse.parse(records));
 });
@@ -74,7 +82,11 @@ router.post("/attendance-records", async (req, res): Promise<void> => {
 
   const [record] = await db
     .insert(attendanceRecordsTable)
-    .values({ ...parsed.data, date: toDateString(parsed.data.date) })
+    .values({
+      ...parsed.data,
+      userId: req.userId!,
+      date: toDateString(parsed.data.date),
+    })
     .returning();
 
   res.status(201).json(CreateAttendanceRecordResponse.parse(record));
@@ -99,7 +111,12 @@ router.patch("/attendance-records/:id", async (req, res): Promise<void> => {
       ...parsed.data,
       date: parsed.data.date ? toDateString(parsed.data.date) : undefined,
     })
-    .where(eq(attendanceRecordsTable.id, params.data.id))
+    .where(
+      and(
+        eq(attendanceRecordsTable.id, params.data.id),
+        eq(attendanceRecordsTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!record) {
@@ -119,7 +136,12 @@ router.delete("/attendance-records/:id", async (req, res): Promise<void> => {
 
   const [record] = await db
     .delete(attendanceRecordsTable)
-    .where(eq(attendanceRecordsTable.id, params.data.id))
+    .where(
+      and(
+        eq(attendanceRecordsTable.id, params.data.id),
+        eq(attendanceRecordsTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!record) {

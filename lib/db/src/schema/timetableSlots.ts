@@ -5,6 +5,7 @@ import { coursesTable } from "./courses";
 
 export const timetableSlotsTable = pgTable("timetable_slots", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   courseId: integer("course_id")
     .notNull()
     .references(() => coursesTable.id, { onDelete: "cascade" }),
@@ -16,6 +17,6 @@ export const timetableSlotsTable = pgTable("timetable_slots", {
 
 export const insertTimetableSlotSchema = createInsertSchema(
   timetableSlotsTable,
-).omit({ id: true });
+).omit({ id: true, userId: true });
 export type InsertTimetableSlot = z.infer<typeof insertTimetableSlotSchema>;
 export type TimetableSlot = typeof timetableSlotsTable.$inferSelect;

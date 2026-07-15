@@ -13,8 +13,10 @@ import {
   CreateTaskResponse,
   UpdateTaskResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.get("/tasks/upcoming", async (req, res): Promise<void> => {
   const query = GetUpcomingTasksQueryParams.safeParse(req.query);
@@ -28,7 +30,7 @@ router.get("/tasks/upcoming", async (req, res): Promise<void> => {
   const tasks = await db
     .select()
     .from(tasksTable)
-    .where(ne(tasksTable.status, "completed"))
+    .where(and(ne(tasksTable.status, "completed"), eq(tasksTable.userId, req.userId!)))
     .orderBy(asc(tasksTable.dueDate))
     .limit(limit);
 
@@ -42,7 +44,7 @@ router.get("/tasks", async (req, res): Promise<void> => {
     return;
   }
 
-  const conditions = [];
+  const conditions = [eq(tasksTable.userId, req.userId!)];
   if (query.data.status) conditions.push(eq(tasksTable.status, query.data.status));
   if (query.data.type) conditions.push(eq(tasksTable.type, query.data.type));
   if (query.data.courseId !== undefined)
@@ -51,7 +53,7 @@ router.get("/tasks", async (req, res): Promise<void> => {
   const tasks = await db
     .select()
     .from(tasksTable)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(asc(tasksTable.dueDate));
 
   res.json(ListTasksResponse.parse(tasks));
@@ -64,7 +66,10 @@ router.post("/tasks", async (req, res): Promise<void> => {
     return;
   }
 
-  const [task] = await db.insert(tasksTable).values(parsed.data).returning();
+  const [task] = await db
+    .insert(tasksTable)
+    .values({ ...parsed.data, userId: req.userId! })
+    .returning();
 
   res.status(201).json(CreateTaskResponse.parse(task));
 });
@@ -85,7 +90,7 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
   const [task] = await db
     .update(tasksTable)
     .set(parsed.data)
-    .where(eq(tasksTable.id, params.data.id))
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId!)))
     .returning();
 
   if (!task) {
@@ -105,7 +110,7 @@ router.delete("/tasks/:id", async (req, res): Promise<void> => {
 
   const [task] = await db
     .delete(tasksTable)
-    .where(eq(tasksTable.id, params.data.id))
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId!)))
     .returning();
 
   if (!task) {

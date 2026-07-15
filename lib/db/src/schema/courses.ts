@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const coursesTable = pgTable("courses", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   name: text("name").notNull(),
   code: text("code"),
   instructor: text("instructor"),
@@ -16,6 +17,7 @@ export const coursesTable = pgTable("courses", {
 
 export const insertCourseSchema = createInsertSchema(coursesTable).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 export type InsertCourse = z.infer<typeof insertCourseSchema>;

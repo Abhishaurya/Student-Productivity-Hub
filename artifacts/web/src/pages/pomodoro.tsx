@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useCreatePomodoroSession, useGetPomodoroStats, getGetPomodoroStatsQueryKey, useListCourses, useListTasks } from '@workspace/api-client-react';
+import { useState, useEffect, useRef } from 'react';
+import { useCreatePomodoroSession, useGetPomodoroStats, getGetPomodoroStatsQueryKey, useListCourses, useListTasks, useListBlocklistItems, getGetFocusShieldStatsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, Button, Select } from '../components/ui';
-import { Timer as TimerIcon, Play, Pause, Square, CheckCircle2, Flame } from 'lucide-react';
+import { Timer as TimerIcon, Play, Pause, Square, Flame, ShieldAlert } from 'lucide-react';
 
 export default function Pomodoro() {
   const { data: stats } = useGetPomodoroStats();
   const { data: courses } = useListCourses();
   const { data: tasks } = useListTasks({ status: 'pending' });
+  const { data: blocklist } = useListBlocklistItems();
   const createSession = useCreatePomodoroSession();
   const queryClient = useQueryClient();
 
@@ -17,6 +18,31 @@ export default function Pomodoro() {
   
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+
+  // Focus Shield: count tab-switches/window-blurs while a focus session is running.
+  const [distractionCount, setDistractionCount] = useState(0);
+  const [showNudge, setShowNudge] = useState(false);
+  const isActiveRef = useRef(isActive);
+  const modeRef = useRef(mode);
+  isActiveRef.current = isActive;
+  modeRef.current = mode;
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isActiveRef.current && modeRef.current === 'focus') {
+        setDistractionCount((c) => c + 1);
+        setShowNudge(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  useEffect(() => {
+    if (!showNudge) return;
+    const timeout = setTimeout(() => setShowNudge(false), 6000);
+    return () => clearTimeout(timeout);
+  }, [showNudge]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -35,13 +61,16 @@ export default function Pomodoro() {
         data: {
           durationMinutes: 25,
           courseId: selectedCourseId ? parseInt(selectedCourseId) : undefined,
-          taskId: selectedTaskId ? parseInt(selectedTaskId) : undefined
+          taskId: selectedTaskId ? parseInt(selectedTaskId) : undefined,
+          distractionCount
         }
       }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetPomodoroStatsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetFocusShieldStatsQueryKey() });
           setMode('short_break');
           setTimeLeft(5 * 60);
+          setDistractionCount(0);
         }
       });
     } else {
@@ -55,6 +84,7 @@ export default function Pomodoro() {
   const resetTimer = () => {
     setIsActive(false);
     setTimeLeft(mode === 'focus' ? 25 * 60 : 5 * 60);
+    setDistractionCount(0);
   };
 
   const switchMode = (newMode: 'focus' | 'short_break') => {
@@ -81,6 +111,22 @@ export default function Pomodoro() {
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl">Deep work sessions, block by block.</p>
       </header>
+
+      {showNudge && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm bg-destructive text-destructive-foreground rounded-2xl shadow-xl p-4 flex items-start gap-3 animate-in slide-in-from-top-4 fade-in duration-300">
+          <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-sm">You drifted away from focus.</p>
+            <p className="text-xs opacity-90 mt-1">Focus Shield noticed you switched tabs during your session. Come back and finish strong.</p>
+          </div>
+        </div>
+      )}
+
+      {isActive && mode === 'focus' && distractionCount > 0 && (
+        <div className="flex items-center justify-center gap-2 text-sm font-semibold text-destructive bg-destructive/10 rounded-xl py-2">
+          <ShieldAlert className="w-4 h-4" /> {distractionCount} distraction{distractionCount > 1 ? 's' : ''} this session
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Timer Section */}
@@ -161,6 +207,21 @@ export default function Pomodoro() {
               </div>
             </CardContent>
           </Card>
+
+          {blocklist && blocklist.length > 0 && (
+            <Card>
+              <CardContent className="p-5 md:p-6">
+                <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wider">Focus Shield is watching for</h3>
+                <div className="flex flex-wrap gap-2">
+                  {blocklist.slice(0, 6).map((item) => (
+                    <span key={item.id} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-accent text-accent-foreground">
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

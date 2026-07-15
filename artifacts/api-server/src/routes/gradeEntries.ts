@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, gradeEntriesTable } from "@workspace/db";
 import {
   CreateGradeEntryBody,
@@ -11,11 +11,16 @@ import {
   CreateGradeEntryResponse,
   UpdateGradeEntryResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
-router.get("/cgpa-summary", async (_req, res): Promise<void> => {
-  const entries = await db.select().from(gradeEntriesTable);
+router.get("/cgpa-summary", async (req, res): Promise<void> => {
+  const entries = await db
+    .select()
+    .from(gradeEntriesTable)
+    .where(eq(gradeEntriesTable.userId, req.userId!));
 
   const bySemester = new Map<string, { points: number; credits: number }>();
   for (const entry of entries) {
@@ -47,8 +52,11 @@ router.get("/cgpa-summary", async (_req, res): Promise<void> => {
   res.json(GetCgpaSummaryResponse.parse({ cgpa, totalCredits, semesters }));
 });
 
-router.get("/grade-entries", async (_req, res): Promise<void> => {
-  const entries = await db.select().from(gradeEntriesTable);
+router.get("/grade-entries", async (req, res): Promise<void> => {
+  const entries = await db
+    .select()
+    .from(gradeEntriesTable)
+    .where(eq(gradeEntriesTable.userId, req.userId!));
   res.json(ListGradeEntriesResponse.parse(entries));
 });
 
@@ -61,7 +69,7 @@ router.post("/grade-entries", async (req, res): Promise<void> => {
 
   const [entry] = await db
     .insert(gradeEntriesTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId: req.userId! })
     .returning();
 
   res.status(201).json(CreateGradeEntryResponse.parse(entry));
@@ -83,7 +91,12 @@ router.patch("/grade-entries/:id", async (req, res): Promise<void> => {
   const [entry] = await db
     .update(gradeEntriesTable)
     .set(parsed.data)
-    .where(eq(gradeEntriesTable.id, params.data.id))
+    .where(
+      and(
+        eq(gradeEntriesTable.id, params.data.id),
+        eq(gradeEntriesTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!entry) {
@@ -103,7 +116,12 @@ router.delete("/grade-entries/:id", async (req, res): Promise<void> => {
 
   const [entry] = await db
     .delete(gradeEntriesTable)
-    .where(eq(gradeEntriesTable.id, params.data.id))
+    .where(
+      and(
+        eq(gradeEntriesTable.id, params.data.id),
+        eq(gradeEntriesTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!entry) {

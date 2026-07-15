@@ -11,6 +11,7 @@ import { coursesTable } from "./courses";
 
 export const notesTable = pgTable("notes", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull().default(""),
   courseId: integer("course_id").references(() => coursesTable.id, {
@@ -29,6 +30,7 @@ export const notesTable = pgTable("notes", {
 
 export const insertNoteSchema = createInsertSchema(notesTable).omit({
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
 });

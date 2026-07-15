@@ -612,15 +612,19 @@ export const ListPomodoroSessionsResponseItem = zod.object({
   "taskId": zod.number().nullish(),
   "courseId": zod.number().nullish(),
   "durationMinutes": zod.number(),
+  "distractionCount": zod.number().describe('Number of times the user left the tab\/app during this focus session'),
   "completedAt": zod.coerce.date()
 })
 export const ListPomodoroSessionsResponse = zod.array(ListPomodoroSessionsResponseItem)
 
 
+export const createPomodoroSessionBodyDistractionCountDefault = 0;
+
 export const CreatePomodoroSessionBody = zod.object({
   "taskId": zod.number().optional(),
   "courseId": zod.number().optional(),
-  "durationMinutes": zod.number()
+  "durationMinutes": zod.number(),
+  "distractionCount": zod.number().default(createPomodoroSessionBodyDistractionCountDefault)
 })
 
 export const CreatePomodoroSessionResponse = zod.object({
@@ -628,6 +632,7 @@ export const CreatePomodoroSessionResponse = zod.object({
   "taskId": zod.number().nullish(),
   "courseId": zod.number().nullish(),
   "durationMinutes": zod.number(),
+  "distractionCount": zod.number().describe('Number of times the user left the tab\/app during this focus session'),
   "completedAt": zod.coerce.date()
 })
 
@@ -714,6 +719,54 @@ export const SummarizeNoteResponse = zod.object({
   "tags": zod.array(zod.string()),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List the distraction apps/sites the user wants to avoid
+ */
+export const ListBlocklistItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "label": zod.string(),
+  "category": zod.enum(['social', 'video', 'games', 'messaging', 'other']),
+  "createdAt": zod.coerce.date()
+})
+export const ListBlocklistItemsResponse = zod.array(ListBlocklistItemsResponseItem)
+
+
+
+
+
+export const CreateBlocklistItemBody = zod.object({
+  "label": zod.string().min(1),
+  "category": zod.enum(['social', 'video', 'games', 'messaging', 'other']).optional()
+})
+
+export const CreateBlocklistItemResponse = zod.object({
+  "id": zod.number(),
+  "label": zod.string(),
+  "category": zod.enum(['social', 'video', 'games', 'messaging', 'other']),
+  "createdAt": zod.coerce.date()
+})
+
+
+export const DeleteBlocklistItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteBlocklistItemResponse = zod.void()
+
+
+/**
+ * @summary Distraction-free streaks and focus discipline stats
+ */
+export const GetFocusShieldStatsResponse = zod.object({
+  "currentStreak": zod.number().describe('Consecutive distraction-free completed focus sessions'),
+  "longestStreak": zod.number(),
+  "totalFocusSessions": zod.number(),
+  "distractionFreeSessions": zod.number(),
+  "totalDistractions": zod.number(),
+  "blockedItemsCount": zod.number()
 })
 
 

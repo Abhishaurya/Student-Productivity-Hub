@@ -26,3 +26,4 @@ export * from "./gradeEntries";
 export * from "./goals";
 export * from "./reminders";
 export * from "./pomodoroSessions";
+export * from "./blocklistItems";

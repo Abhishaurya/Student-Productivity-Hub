@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, coursesTable } from "@workspace/db";
 import {
   CreateCourseBody,
@@ -10,13 +10,16 @@ import {
   CreateCourseResponse,
   UpdateCourseResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
-router.get("/courses", async (_req, res): Promise<void> => {
+router.get("/courses", async (req, res): Promise<void> => {
   const courses = await db
     .select()
     .from(coursesTable)
+    .where(eq(coursesTable.userId, req.userId!))
     .orderBy(coursesTable.name);
   res.json(ListCoursesResponse.parse(courses));
 });
@@ -30,7 +33,7 @@ router.post("/courses", async (req, res): Promise<void> => {
 
   const [course] = await db
     .insert(coursesTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId: req.userId! })
     .returning();
 
   res.status(201).json(CreateCourseResponse.parse(course));
@@ -52,7 +55,12 @@ router.patch("/courses/:id", async (req, res): Promise<void> => {
   const [course] = await db
     .update(coursesTable)
     .set(parsed.data)
-    .where(eq(coursesTable.id, params.data.id))
+    .where(
+      and(
+        eq(coursesTable.id, params.data.id),
+        eq(coursesTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!course) {
@@ -72,7 +80,12 @@ router.delete("/courses/:id", async (req, res): Promise<void> => {
 
   const [course] = await db
     .delete(coursesTable)
-    .where(eq(coursesTable.id, params.data.id))
+    .where(
+      and(
+        eq(coursesTable.id, params.data.id),
+        eq(coursesTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!course) {

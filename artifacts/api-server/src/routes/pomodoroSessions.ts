@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { db, pomodoroSessionsTable } from "@workspace/db";
 import {
   CreatePomodoroSessionBody,
@@ -7,14 +7,16 @@ import {
   GetPomodoroStatsResponse,
   CreatePomodoroSessionResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-router.get("/pomodoro-sessions/stats", async (_req, res): Promise<void> => {
+router.get("/pomodoro-sessions/stats", async (req, res): Promise<void> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
   sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -22,9 +24,17 @@ router.get("/pomodoro-sessions/stats", async (_req, res): Promise<void> => {
   const recentSessions = await db
     .select()
     .from(pomodoroSessionsTable)
-    .where(gte(pomodoroSessionsTable.completedAt, sevenDaysAgo));
+    .where(
+      and(
+        gte(pomodoroSessionsTable.completedAt, sevenDaysAgo),
+        eq(pomodoroSessionsTable.userId, req.userId!),
+      ),
+    );
 
-  const allSessions = await db.select().from(pomodoroSessionsTable);
+  const allSessions = await db
+    .select()
+    .from(pomodoroSessionsTable)
+    .where(eq(pomodoroSessionsTable.userId, req.userId!));
 
   const today = dayKey(new Date());
   const byDay = new Map<string, { count: number; minutes: number }>();
@@ -60,8 +70,11 @@ router.get("/pomodoro-sessions/stats", async (_req, res): Promise<void> => {
   );
 });
 
-router.get("/pomodoro-sessions", async (_req, res): Promise<void> => {
-  const sessions = await db.select().from(pomodoroSessionsTable);
+router.get("/pomodoro-sessions", async (req, res): Promise<void> => {
+  const sessions = await db
+    .select()
+    .from(pomodoroSessionsTable)
+    .where(eq(pomodoroSessionsTable.userId, req.userId!));
   res.json(ListPomodoroSessionsResponse.parse(sessions));
 });
 
@@ -74,7 +87,7 @@ router.post("/pomodoro-sessions", async (req, res): Promise<void> => {
 
   const [session] = await db
     .insert(pomodoroSessionsTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId: req.userId! })
     .returning();
 
   res.status(201).json(CreatePomodoroSessionResponse.parse(session));

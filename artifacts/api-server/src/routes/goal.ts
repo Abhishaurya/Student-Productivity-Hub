@@ -1,24 +1,30 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, goalsTable } from "@workspace/db";
 import {
   UpdateGoalBody,
   GetGoalResponse,
   UpdateGoalResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
-async function getOrCreateGoal() {
-  const [existing] = await db.select().from(goalsTable).limit(1);
+async function getOrCreateGoal(userId: string) {
+  const [existing] = await db
+    .select()
+    .from(goalsTable)
+    .where(eq(goalsTable.userId, userId))
+    .limit(1);
   if (existing) return existing;
 
-  const [created] = await db.insert(goalsTable).values({}).returning();
+  const [created] = await db.insert(goalsTable).values({ userId }).returning();
   return created;
 }
 
-router.get("/goal", async (_req, res): Promise<void> => {
-  const goal = await getOrCreateGoal();
+router.get("/goal", async (req, res): Promise<void> => {
+  const goal = await getOrCreateGoal(req.userId!);
   res.json(GetGoalResponse.parse(goal));
 });
 
@@ -29,7 +35,7 @@ router.put("/goal", async (req, res): Promise<void> => {
     return;
   }
 
-  const current = await getOrCreateGoal();
+  const current = await getOrCreateGoal(req.userId!);
   const [goal] = await db
     .update(goalsTable)
     .set({
@@ -38,7 +44,7 @@ router.put("/goal", async (req, res): Promise<void> => {
         ? parsed.data.targetDate.toISOString().slice(0, 10)
         : undefined,
     })
-    .where(eq(goalsTable.id, current.id))
+    .where(and(eq(goalsTable.id, current.id), eq(goalsTable.userId, req.userId!)))
     .returning();
 
   res.json(UpdateGoalResponse.parse(goal));

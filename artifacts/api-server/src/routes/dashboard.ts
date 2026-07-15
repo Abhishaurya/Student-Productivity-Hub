@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import {
   db,
   timetableSlotsTable,
@@ -10,10 +10,13 @@ import {
   remindersTable,
 } from "@workspace/db";
 import { GetDashboardSummaryResponse } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
-router.get("/dashboard-summary", async (_req, res): Promise<void> => {
+router.get("/dashboard-summary", async (req, res): Promise<void> => {
+  const userId = req.userId!;
   const today = new Date().getDay();
 
   const [todayTimetable, upcomingTasks, courses, records, gradeEntries, upcomingReminders] =
@@ -21,20 +24,28 @@ router.get("/dashboard-summary", async (_req, res): Promise<void> => {
       db
         .select()
         .from(timetableSlotsTable)
-        .where(eq(timetableSlotsTable.dayOfWeek, today)),
+        .where(
+          and(
+            eq(timetableSlotsTable.dayOfWeek, today),
+            eq(timetableSlotsTable.userId, userId),
+          ),
+        ),
       db
         .select()
         .from(tasksTable)
-        .where(ne(tasksTable.status, "completed"))
+        .where(and(ne(tasksTable.status, "completed"), eq(tasksTable.userId, userId)))
         .orderBy(asc(tasksTable.dueDate))
         .limit(5),
-      db.select().from(coursesTable),
-      db.select().from(attendanceRecordsTable),
-      db.select().from(gradeEntriesTable),
+      db.select().from(coursesTable).where(eq(coursesTable.userId, userId)),
+      db
+        .select()
+        .from(attendanceRecordsTable)
+        .where(eq(attendanceRecordsTable.userId, userId)),
+      db.select().from(gradeEntriesTable).where(eq(gradeEntriesTable.userId, userId)),
       db
         .select()
         .from(remindersTable)
-        .where(eq(remindersTable.isDone, false))
+        .where(and(eq(remindersTable.isDone, false), eq(remindersTable.userId, userId)))
         .orderBy(asc(remindersTable.remindAt))
         .limit(5),
     ]);

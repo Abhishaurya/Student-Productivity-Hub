@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, remindersTable } from "@workspace/db";
 import {
   CreateReminderBody,
@@ -13,8 +13,10 @@ import {
   CreateReminderResponse,
   UpdateReminderResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.get("/reminders/upcoming", async (req, res): Promise<void> => {
   const query = GetUpcomingRemindersQueryParams.safeParse(req.query);
@@ -28,7 +30,7 @@ router.get("/reminders/upcoming", async (req, res): Promise<void> => {
   const reminders = await db
     .select()
     .from(remindersTable)
-    .where(eq(remindersTable.isDone, false))
+    .where(and(eq(remindersTable.isDone, false), eq(remindersTable.userId, req.userId!)))
     .orderBy(asc(remindersTable.remindAt))
     .limit(limit);
 
@@ -42,12 +44,13 @@ router.get("/reminders", async (req, res): Promise<void> => {
     return;
   }
 
+  const conditions = [eq(remindersTable.userId, req.userId!)];
+  if (query.data.upcomingOnly) conditions.push(eq(remindersTable.isDone, false));
+
   const reminders = await db
     .select()
     .from(remindersTable)
-    .where(
-      query.data.upcomingOnly ? eq(remindersTable.isDone, false) : undefined,
-    )
+    .where(and(...conditions))
     .orderBy(asc(remindersTable.remindAt));
 
   res.json(ListRemindersResponse.parse(reminders));
@@ -62,7 +65,7 @@ router.post("/reminders", async (req, res): Promise<void> => {
 
   const [reminder] = await db
     .insert(remindersTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId: req.userId! })
     .returning();
 
   res.status(201).json(CreateReminderResponse.parse(reminder));
@@ -84,7 +87,7 @@ router.patch("/reminders/:id", async (req, res): Promise<void> => {
   const [reminder] = await db
     .update(remindersTable)
     .set(parsed.data)
-    .where(eq(remindersTable.id, params.data.id))
+    .where(and(eq(remindersTable.id, params.data.id), eq(remindersTable.userId, req.userId!)))
     .returning();
 
   if (!reminder) {
@@ -104,7 +107,7 @@ router.delete("/reminders/:id", async (req, res): Promise<void> => {
 
   const [reminder] = await db
     .delete(remindersTable)
-    .where(eq(remindersTable.id, params.data.id))
+    .where(and(eq(remindersTable.id, params.data.id), eq(remindersTable.userId, req.userId!)))
     .returning();
 
   if (!reminder) {

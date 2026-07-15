@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, timetableSlotsTable } from "@workspace/db";
 import {
   CreateTimetableSlotBody,
@@ -11,20 +11,30 @@ import {
   CreateTimetableSlotResponse,
   UpdateTimetableSlotResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
-router.get("/timetable-slots/today", async (_req, res): Promise<void> => {
+router.get("/timetable-slots/today", async (req, res): Promise<void> => {
   const today = new Date().getDay();
   const slots = await db
     .select()
     .from(timetableSlotsTable)
-    .where(eq(timetableSlotsTable.dayOfWeek, today));
+    .where(
+      and(
+        eq(timetableSlotsTable.dayOfWeek, today),
+        eq(timetableSlotsTable.userId, req.userId!),
+      ),
+    );
   res.json(GetTodayTimetableSlotsResponse.parse(slots));
 });
 
-router.get("/timetable-slots", async (_req, res): Promise<void> => {
-  const slots = await db.select().from(timetableSlotsTable);
+router.get("/timetable-slots", async (req, res): Promise<void> => {
+  const slots = await db
+    .select()
+    .from(timetableSlotsTable)
+    .where(eq(timetableSlotsTable.userId, req.userId!));
   res.json(ListTimetableSlotsResponse.parse(slots));
 });
 
@@ -37,7 +47,7 @@ router.post("/timetable-slots", async (req, res): Promise<void> => {
 
   const [slot] = await db
     .insert(timetableSlotsTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId: req.userId! })
     .returning();
 
   res.status(201).json(CreateTimetableSlotResponse.parse(slot));
@@ -59,7 +69,12 @@ router.patch("/timetable-slots/:id", async (req, res): Promise<void> => {
   const [slot] = await db
     .update(timetableSlotsTable)
     .set(parsed.data)
-    .where(eq(timetableSlotsTable.id, params.data.id))
+    .where(
+      and(
+        eq(timetableSlotsTable.id, params.data.id),
+        eq(timetableSlotsTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!slot) {
@@ -79,7 +94,12 @@ router.delete("/timetable-slots/:id", async (req, res): Promise<void> => {
 
   const [slot] = await db
     .delete(timetableSlotsTable)
-    .where(eq(timetableSlotsTable.id, params.data.id))
+    .where(
+      and(
+        eq(timetableSlotsTable.id, params.data.id),
+        eq(timetableSlotsTable.userId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!slot) {

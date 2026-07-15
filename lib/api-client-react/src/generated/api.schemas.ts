@@ -358,6 +358,8 @@ export interface PomodoroSession {
   /** @nullable */
   courseId?: number | null;
   durationMinutes: number;
+  /** Number of times the user left the tab/app during this focus session */
+  distractionCount: number;
   completedAt: string;
 }
 
@@ -365,6 +367,7 @@ export interface PomodoroSessionInput {
   taskId?: number;
   courseId?: number;
   durationMinutes: number;
+  distractionCount?: number;
 }
 
 export interface PomodoroDayStat {
@@ -399,6 +402,51 @@ export interface StudyPlanResponse {
   /** Markdown-formatted AI study plan */
   plan: string;
   generatedAt: string;
+}
+
+export type BlocklistItemCategory = typeof BlocklistItemCategory[keyof typeof BlocklistItemCategory];
+
+
+export const BlocklistItemCategory = {
+  social: 'social',
+  video: 'video',
+  games: 'games',
+  messaging: 'messaging',
+  other: 'other',
+} as const;
+
+export interface BlocklistItem {
+  id: number;
+  label: string;
+  category: BlocklistItemCategory;
+  createdAt: string;
+}
+
+export type BlocklistItemInputCategory = typeof BlocklistItemInputCategory[keyof typeof BlocklistItemInputCategory];
+
+
+export const BlocklistItemInputCategory = {
+  social: 'social',
+  video: 'video',
+  games: 'games',
+  messaging: 'messaging',
+  other: 'other',
+} as const;
+
+export interface BlocklistItemInput {
+  /** @minLength 1 */
+  label: string;
+  category?: BlocklistItemInputCategory;
+}
+
+export interface FocusShieldStats {
+  /** Consecutive distraction-free completed focus sessions */
+  currentStreak: number;
+  longestStreak: number;
+  totalFocusSessions: number;
+  distractionFreeSessions: number;
+  totalDistractions: number;
+  blockedItemsCount: number;
 }
 
 export type ListTasksParams = {

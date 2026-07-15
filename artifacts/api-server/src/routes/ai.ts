@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { db, tasksTable, notesTable } from "@workspace/db";
 import { openai } from "../lib/openai";
 import {
@@ -7,14 +7,16 @@ import {
   SummarizeNoteParams,
   SummarizeNoteResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.post("/ai/study-plan", async (req, res): Promise<void> => {
   const tasks = await db
     .select()
     .from(tasksTable)
-    .where(ne(tasksTable.status, "completed"))
+    .where(and(ne(tasksTable.status, "completed"), eq(tasksTable.userId, req.userId!)))
     .orderBy(asc(tasksTable.dueDate));
 
   if (tasks.length === 0) {
@@ -79,7 +81,7 @@ router.post("/notes/:id/summarize", async (req, res): Promise<void> => {
   const [note] = await db
     .select()
     .from(notesTable)
-    .where(eq(notesTable.id, params.data.id));
+    .where(and(eq(notesTable.id, params.data.id), eq(notesTable.userId, req.userId!)));
 
   if (!note) {
     res.status(404).json({ error: "Note not found" });
@@ -114,7 +116,7 @@ router.post("/notes/:id/summarize", async (req, res): Promise<void> => {
     const [updated] = await db
       .update(notesTable)
       .set({ summary })
-      .where(eq(notesTable.id, note.id))
+      .where(and(eq(notesTable.id, note.id), eq(notesTable.userId, req.userId!)))
       .returning();
 
     res.json(SummarizeNoteResponse.parse(updated));

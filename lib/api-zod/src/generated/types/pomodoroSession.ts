@@ -13,5 +13,7 @@ export interface PomodoroSession {
   /** @nullable */
   courseId?: number | null;
   durationMinutes: number;
+  /** Number of times the user left the tab/app during this focus session */
+  distractionCount: number;
   completedAt: Date;
 }

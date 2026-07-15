@@ -5,6 +5,7 @@ import { coursesTable } from "./courses";
 
 export const tasksTable = pgTable("tasks", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   courseId: integer("course_id").references(() => coursesTable.id, {
@@ -22,6 +23,7 @@ export const tasksTable = pgTable("tasks", {
 
 export const insertTaskSchema = createInsertSchema(tasksTable).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 export type InsertTask = z.infer<typeof insertTaskSchema>;

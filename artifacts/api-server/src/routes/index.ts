@@ -11,6 +11,8 @@ import remindersRouter from "./reminders";
 import pomodoroSessionsRouter from "./pomodoroSessions";
 import dashboardRouter from "./dashboard";
 import aiRouter from "./ai";
+import blocklistItemsRouter from "./blocklistItems";
+import focusShieldRouter from "./focusShield";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(remindersRouter);
 router.use(pomodoroSessionsRouter);
 router.use(dashboardRouter);
 router.use(aiRouter);
+router.use(blocklistItemsRouter);
+router.use(focusShieldRouter);
 
 export default router;

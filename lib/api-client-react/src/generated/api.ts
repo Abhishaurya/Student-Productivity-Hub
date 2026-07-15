@@ -24,11 +24,14 @@ import type {
   AttendanceRecordInput,
   AttendanceRecordUpdate,
   AttendanceSummaryEntry,
+  BlocklistItem,
+  BlocklistItemInput,
   CgpaSummary,
   Course,
   CourseInput,
   CourseUpdate,
   DashboardSummary,
+  FocusShieldStats,
   GetUpcomingRemindersParams,
   GetUpcomingTasksParams,
   Goal,
@@ -3098,4 +3101,288 @@ export const useSummarizeNote = <TError = ErrorType<void>,
       > => {
       return useMutation(getSummarizeNoteMutationOptions(options));
     }
+
+export const getListBlocklistItemsUrl = () => {
+
+
+
+
+  return `/api/blocklist-items`
+}
+
+/**
+ * @summary List the distraction apps/sites the user wants to avoid
+ */
+export const listBlocklistItems = async ( options?: RequestInit): Promise<BlocklistItem[]> => {
+
+  return customFetch<BlocklistItem[]>(getListBlocklistItemsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBlocklistItemsQueryKey = () => {
+    return [
+    `/api/blocklist-items`
+    ] as const;
+    }
+
+
+export const getListBlocklistItemsQueryOptions = <TData = Awaited<ReturnType<typeof listBlocklistItems>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocklistItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBlocklistItemsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBlocklistItems>>> = ({ signal }) => listBlocklistItems({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBlocklistItems>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListBlocklistItemsQueryResult = NonNullable<Awaited<ReturnType<typeof listBlocklistItems>>>
+export type ListBlocklistItemsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the distraction apps/sites the user wants to avoid
+ */
+
+export function useListBlocklistItems<TData = Awaited<ReturnType<typeof listBlocklistItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocklistItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListBlocklistItemsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBlocklistItemUrl = () => {
+
+
+
+
+  return `/api/blocklist-items`
+}
+
+export const createBlocklistItem = async (blocklistItemInput: BlocklistItemInput, options?: RequestInit): Promise<BlocklistItem> => {
+
+  return customFetch<BlocklistItem>(getCreateBlocklistItemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(blocklistItemInput)
+  }
+);}
+
+
+
+
+
+export const getCreateBlocklistItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBlocklistItem>>, TError,{data: BodyType<BlocklistItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBlocklistItem>>, TError,{data: BodyType<BlocklistItemInput>}, TContext> => {
+
+const mutationKey = ['createBlocklistItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBlocklistItem>>, {data: BodyType<BlocklistItemInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBlocklistItem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBlocklistItemMutationResult = NonNullable<Awaited<ReturnType<typeof createBlocklistItem>>>
+    export type CreateBlocklistItemMutationBody = BodyType<BlocklistItemInput>
+    export type CreateBlocklistItemMutationError = ErrorType<unknown>
+
+    export const useCreateBlocklistItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBlocklistItem>>, TError,{data: BodyType<BlocklistItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBlocklistItem>>,
+        TError,
+        {data: BodyType<BlocklistItemInput>},
+        TContext
+      > => {
+      return useMutation(getCreateBlocklistItemMutationOptions(options));
+    }
+
+export const getDeleteBlocklistItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/blocklist-items/${id}`
+}
+
+export const deleteBlocklistItem = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteBlocklistItemUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteBlocklistItemMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBlocklistItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBlocklistItem>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteBlocklistItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBlocklistItem>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteBlocklistItem(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBlocklistItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBlocklistItem>>>
+
+    export type DeleteBlocklistItemMutationError = ErrorType<void>
+
+    export const useDeleteBlocklistItem = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBlocklistItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBlocklistItem>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteBlocklistItemMutationOptions(options));
+    }
+
+export const getGetFocusShieldStatsUrl = () => {
+
+
+
+
+  return `/api/focus-shield/stats`
+}
+
+/**
+ * @summary Distraction-free streaks and focus discipline stats
+ */
+export const getFocusShieldStats = async ( options?: RequestInit): Promise<FocusShieldStats> => {
+
+  return customFetch<FocusShieldStats>(getGetFocusShieldStatsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFocusShieldStatsQueryKey = () => {
+    return [
+    `/api/focus-shield/stats`
+    ] as const;
+    }
+
+
+export const getGetFocusShieldStatsQueryOptions = <TData = Awaited<ReturnType<typeof getFocusShieldStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFocusShieldStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFocusShieldStatsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFocusShieldStats>>> = ({ signal }) => getFocusShieldStats({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFocusShieldStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFocusShieldStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getFocusShieldStats>>>
+export type GetFocusShieldStatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Distraction-free streaks and focus discipline stats
+ */
+
+export function useGetFocusShieldStats<TData = Awaited<ReturnType<typeof getFocusShieldStats>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFocusShieldStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFocusShieldStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

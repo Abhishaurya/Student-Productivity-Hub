@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, notesTable } from "@workspace/db";
 import {
   CreateNoteBody,
@@ -13,8 +13,10 @@ import {
   UpdateNoteResponse,
   GetNoteResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.get("/notes", async (req, res): Promise<void> => {
   const query = ListNotesQueryParams.safeParse(req.query);
@@ -23,14 +25,14 @@ router.get("/notes", async (req, res): Promise<void> => {
     return;
   }
 
+  const conditions = [eq(notesTable.userId, req.userId!)];
+  if (query.data.courseId !== undefined)
+    conditions.push(eq(notesTable.courseId, query.data.courseId));
+
   const notes = await db
     .select()
     .from(notesTable)
-    .where(
-      query.data.courseId !== undefined
-        ? eq(notesTable.courseId, query.data.courseId)
-        : undefined,
-    );
+    .where(and(...conditions));
 
   res.json(ListNotesResponse.parse(notes));
 });
@@ -45,7 +47,7 @@ router.get("/notes/:id", async (req, res): Promise<void> => {
   const [note] = await db
     .select()
     .from(notesTable)
-    .where(eq(notesTable.id, params.data.id));
+    .where(and(eq(notesTable.id, params.data.id), eq(notesTable.userId, req.userId!)));
 
   if (!note) {
     res.status(404).json({ error: "Note not found" });
@@ -62,7 +64,10 @@ router.post("/notes", async (req, res): Promise<void> => {
     return;
   }
 
-  const [note] = await db.insert(notesTable).values(parsed.data).returning();
+  const [note] = await db
+    .insert(notesTable)
+    .values({ ...parsed.data, userId: req.userId! })
+    .returning();
 
   res.status(201).json(CreateNoteResponse.parse(note));
 });
@@ -83,7 +88,7 @@ router.patch("/notes/:id", async (req, res): Promise<void> => {
   const [note] = await db
     .update(notesTable)
     .set(parsed.data)
-    .where(eq(notesTable.id, params.data.id))
+    .where(and(eq(notesTable.id, params.data.id), eq(notesTable.userId, req.userId!)))
     .returning();
 
   if (!note) {
@@ -103,7 +108,7 @@ router.delete("/notes/:id", async (req, res): Promise<void> => {
 
   const [note] = await db
     .delete(notesTable)
-    .where(eq(notesTable.id, params.data.id))
+    .where(and(eq(notesTable.id, params.data.id), eq(notesTable.userId, req.userId!)))
     .returning();
 
   if (!note) {

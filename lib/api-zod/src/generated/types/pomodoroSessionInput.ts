@@ -10,4 +10,5 @@ export interface PomodoroSessionInput {
   taskId?: number;
   courseId?: number;
   durationMinutes: number;
+  distractionCount?: number;
 }

@@ -5,6 +5,7 @@ import { coursesTable } from "./courses";
 
 export const attendanceRecordsTable = pgTable("attendance_records", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   courseId: integer("course_id")
     .notNull()
     .references(() => coursesTable.id, { onDelete: "cascade" }),
@@ -14,7 +15,7 @@ export const attendanceRecordsTable = pgTable("attendance_records", {
 
 export const insertAttendanceRecordSchema = createInsertSchema(
   attendanceRecordsTable,
-).omit({ id: true });
+).omit({ id: true, userId: true });
 export type InsertAttendanceRecord = z.infer<
   typeof insertAttendanceRecordSchema
 >;

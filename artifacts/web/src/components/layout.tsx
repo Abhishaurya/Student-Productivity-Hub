@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useState, useEffect } from 'react';
+import { useClerk, useUser } from '@clerk/react';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -10,13 +11,17 @@ import {
   FileText, 
   Timer, 
   Bell,
+  ShieldCheck,
+  LogOut,
   Menu,
   X
 } from 'lucide-react';
 import { cn } from './ui';
 
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 const navItems = [
-  { href: '/', label: 'Command Center', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
   { href: '/courses', label: 'Courses', icon: BookOpen },
   { href: '/timetable', label: 'Timetable', icon: Calendar },
   { href: '/tasks', label: 'Tasks & Exams', icon: CheckSquare },
@@ -24,12 +29,15 @@ const navItems = [
   { href: '/grades', label: 'Grades & CGPA', icon: GraduationCap },
   { href: '/notes', label: 'Smart Notes', icon: FileText },
   { href: '/pomodoro', label: 'Focus Timer', icon: Timer },
+  { href: '/focus-shield', label: 'Focus Shield', icon: ShieldCheck },
   { href: '/reminders', label: 'Reminders', icon: Bell },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { signOut } = useClerk();
+  const { user } = useUser();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -39,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="h-[100dvh] bg-background text-foreground flex flex-col md:flex-row overflow-hidden">
       {/* Mobile Top Bar */}
       <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card z-20 shrink-0">
-        <Link href="/" className="flex items-center gap-2 group cursor-pointer block">
+        <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer block">
           <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-display font-bold text-lg">
             S
           </div>
@@ -67,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer block">
+          <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer block">
             <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-display font-bold text-lg group-hover:scale-110 transition-transform">
               S
             </div>
@@ -83,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
+            const isActive = location === item.href || location.startsWith(item.href + '/');
             const Icon = item.icon;
             
             return (
@@ -104,10 +112,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border mt-auto hidden md:block">
-          <div className="bg-accent/50 rounded-xl p-4 text-center">
+        <div className="p-4 border-t border-border mt-auto space-y-3">
+          <div className="bg-accent/50 rounded-xl p-4 text-center hidden md:block">
             <p className="text-xs font-bold text-foreground mb-1">Stay Focused.</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">You've got this.</p>
+          </div>
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-sm font-semibold text-muted-foreground truncate">
+              {user?.primaryEmailAddress?.emailAddress || user?.fullName || 'Student'}
+            </span>
+            <button
+              onClick={() => signOut({ redirectUrl: basePath || '/' })}
+              className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+              title="Log out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
