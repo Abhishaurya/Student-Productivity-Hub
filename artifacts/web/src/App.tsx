@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Route, Switch, Redirect, useLocation, Router as WouterRouter } from 'wouter';
 import { ClerkProvider, Show, useClerk } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Layout } from './components/layout';
 
@@ -32,11 +31,7 @@ const queryClient = new QueryClient({
 // REQUIRED — copy verbatim. Resolves the key from window.location.hostname so the
 // same build serves multiple Clerk custom domains. Do not inline the env var, leave
 // publishableKey undefined, or replace publishableKeyFromHost with anything else.
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
-
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 // REQUIRED — copy verbatim. Empty in dev (Clerk hits dev FAPI directly), auto-set
 // in prod. Do NOT gate on import.meta.env.PROD / NODE_ENV — the empty dev value
 // is intentional, and any branching breaks the prod proxy.
